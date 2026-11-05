@@ -27,6 +27,7 @@ function renderPhotos() {
     card.append(tools); box.append(card);
   });
   $("send").textContent = photos.length ? `送信して読み取り（${photos.length}枚）` : "送信して読み取り";
+  $("send").disabled = !photos.length;   // 写真が無いうちは押せない（薄い色）
 }
 function turn(p, deg) { p.rot = (p.rot + deg + 360) % 360; renderPhotos(); }
 function sendNote(t, cls) { $("sendNote").textContent = t; $("sendNote").className = "note " + (cls || ""); }
@@ -74,7 +75,7 @@ async function sendPhotos() {
     sendNote(`送信できませんでした（${e.message}）。電波と設定を確認してください。`, "err");
   }
   busyEnd();
-  $("send").disabled = false;
+  $("send").disabled = !photos.length;
 }
 
 function initSend() {
