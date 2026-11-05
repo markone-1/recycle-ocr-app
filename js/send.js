@@ -48,6 +48,8 @@ async function sendPhotos() {
   if (!photos.length) return sendNote("先に撮影または選択をしてください。", "err");
   if (!cfg().token) { sendNote("先に「設定」でトークンを登録してください。", "err"); return $("openCfg").click(); }
   $("send").disabled = true;
+  busy("画像を圧縮しています…");
+  await new Promise((r) => setTimeout(r, 50));   // 圧縮で画面が固まる前にダイアログを描かせる
   try {
     const data = photos.map((p) => { const cv = document.createElement("canvas"); drawPhoto(cv, p, MAX_EDGE); return cv.toDataURL("image/jpeg", QUALITY).split(",")[1]; });
     const kb = Math.round(data.reduce((a, d) => a + d.length * 0.75, 0) / 1024);
@@ -58,10 +60,11 @@ async function sendPhotos() {
     const base = await gh(`/git/commits/${main.object.sha}`);
     const tree = [];
     for (let i = 0; i < data.length; i++) {
-      sendNote(`送信中 ${i + 1} / ${data.length}枚（圧縮後 ${kb}KB）`);
+      busy(`送信中 ${i + 1} / ${data.length}枚（圧縮後 ${kb}KB）`);
       const b = await gh("/git/blobs", { method: "POST", body: { content: data[i], encoding: "base64" } });
       tree.push({ path: `in/${p2(i + 1)}.jpg`, mode: "100644", type: "blob", sha: b.sha });
     }
+    busy("送信を仕上げています…");
     const t = await gh("/git/trees", { method: "POST", body: { base_tree: base.tree.sha, tree } });
     const c = await gh("/git/commits", { method: "POST", body: { message: `job ${jobId}`, tree: t.sha, parents: [main.object.sha] } });
     await gh("/git/refs", { method: "POST", body: { ref: `refs/heads/job/${jobId}`, sha: c.sha } });
@@ -70,6 +73,7 @@ async function sendPhotos() {
   } catch (e) {
     sendNote(`送信できませんでした（${e.message}）。電波と設定を確認してください。`, "err");
   }
+  busyEnd();
   $("send").disabled = false;
 }
 

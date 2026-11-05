@@ -31,7 +31,20 @@ function unb64(s) {
   return u8;
 }
 
+// 処理中ダイアログ（閉じられない）。pct（0〜1）を渡すとプログレスバー、省略するとくるくるを出す
+function busy(text, pct) {
+  const d = $("busy");
+  $("busyText").textContent = text;
+  $("busySpin").classList.toggle("hidden", pct !== undefined);
+  $("busyBar").classList.toggle("hidden", pct === undefined);
+  if (pct !== undefined) $("busyFill").style.width = Math.round(Math.min(1, Math.max(0, pct)) * 100) + "%";
+  if (!d.open) d.showModal();
+}
+const busyEnd = () => { if ($("busy").open) $("busy").close(); };
+
 function initSettings(onSaved) {
+  $("busy").oncancel = (e) => e.preventDefault();   // Esc で閉じない
+
   $("openCfg").onclick = () => { const c = cfg(); $("repo").value = c.repo; $("token").value = c.token; $("cfg").showModal(); };
   $("cancelCfg").onclick = () => $("cfg").close();
   $("saveCfg").onclick = () => {

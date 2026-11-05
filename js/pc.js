@@ -179,22 +179,28 @@ async function remote() {
 async function importAll() {
   if (!folder) return bar("先に台帳フォルダを選んでください。", "e");
   if (!cfg().token) return bar("先に「設定」でトークンを登録してください。", "e");
-  $("import").disabled = true; bar("取り込み中…", "k");
+  $("import").disabled = true; bar("");
+  busy("読み取り結果を確認しています…", 0);
   try {
     await persist();
     const rows = (await Ledger.open(await folder.readLedger())).rows;
     const branches = (await gh("/branches?per_page=100")).filter((b) => b.name.startsWith("job/"));
-    let count = 0, waiting = 0; const errors = [];
+    let count = 0, waiting = 0; const errors = [], jobs = [];
     for (const b of branches) {
       const tree = (await gh(`/git/trees/${b.commit.sha}?recursive=1`)).tree;
       const res = tree.find((t) => t.path === "out/result.json");
       if (!res) { waiting++; continue; }
+      const imgs = tree.filter((t) => t.path.startsWith("in/") && t.path.endsWith(".jpg")).sort((a, c) => a.path.localeCompare(c.path));
+      jobs.push({ b, res, imgs });
+    }
+    const total = jobs.reduce((a, j) => a + j.imgs.length, 0);
+    for (const { b, res, imgs } of jobs) {
       const result = JSON.parse(new TextDecoder().decode(unb64((await gh(`/git/blobs/${res.sha}`)).content)));
       const by = {}; (result.items || []).forEach((r) => (by[r.file] = r));
       const jobId = b.name.split("/")[1];
-      const imgs = tree.filter((t) => t.path.startsWith("in/") && t.path.endsWith(".jpg")).sort((a, c) => a.path.localeCompare(c.path));
       const fresh = [];
       for (const t of imgs) {
+        busy(`${count + fresh.length + 1} / ${total}枚を取り込み中`, (count + fresh.length) / total);
         const base = t.path.slice(3), name = `${jobId}_${base}`;
         await folder.write("images/" + name, unb64((await gh(`/git/blobs/${t.sha}`)).content));
         fresh.push(buildItem(name, by[base] || { error: true }, rows, makers));
@@ -203,9 +209,11 @@ async function importAll() {
       await gh(`/git/refs/heads/${b.name}`, { method: "DELETE" });
       count += fresh.length; errors.push(...(result.errors || []));
     }
+    if (total) busy(`${total} / ${total}枚を取り込みました`, 1);
     showCard(); remote();
     bar(count ? `${count}枚を取り込みました。${errors.join(" ")}` : `取り込める伝票はありません。${waiting ? "読み取り中の送信があります。数分待ってください。" : ""}`, errors.length ? "e" : "k");
   } catch (e) { bar(e.message, "e"); }
+  busyEnd();
   $("import").disabled = false;
 }
 

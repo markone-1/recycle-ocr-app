@@ -58,9 +58,16 @@ dialog label{display:block;font-size:13px;color:#555;margin:10px 0 4px}
 dialog input{width:100%;height:40px;font:inherit;border:1px solid #bbb;border-radius:8px;padding:0 8px}
 dialog .row{display:flex;gap:8px;margin-top:14px}
 dialog .row button{flex:1;min-height:44px}
+#busy{text-align:center;padding:24px 20px}
+#busy b{display:block;font-size:16px;margin-bottom:16px}
+#busySpin{width:44px;height:44px;margin:0 auto 14px;border:4px solid #dbe6f1;border-top-color:#185fa5;border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#busyBar{height:12px;margin:0 0 14px;background:#e6e4dd;border-radius:6px;overflow:hidden}
+#busyFill{height:100%;width:0;background:#185fa5;transition:width .2s}
+#busyText{margin:0;font-size:14px;color:#555}
 </style></head><body>
 <header>
-  <h1>家電リサイクル伝票</h1><span class="ver">Ver 1.0</span>
+  <h1>家電リサイクル伝票</h1><span class="ver">Ver 1.1</span>
   <span class="tabs"><button id="tabSend">送信</button> <button id="tabPc">取り込み・確認</button></span>
   <span class="sp"></span>
   <button id="openCfg">設定</button>
@@ -126,6 +133,13 @@ dialog .row button{flex:1;min-height:44px}
   <label>処理用リポジトリ</label><input id="repo" placeholder="markone-1/recycle-ocr">
   <label>GitHub アクセストークン</label><input id="token" type="password" autocomplete="off">
   <div class="row"><button id="cancelCfg">キャンセル</button><button id="saveCfg" class="pri">保存</button></div>
+</dialog>
+
+<dialog id="busy">
+  <b>伝票データ取り込み中</b>
+  <div id="busySpin"></div>
+  <div id="busyBar" class="hidden"><div id="busyFill"></div></div>
+  <p id="busyText"></p>
 </dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
