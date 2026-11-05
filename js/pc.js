@@ -125,7 +125,7 @@ async function showCard() {
   pos = Math.min(pos, list.length - 1);
   const it = list[pos], f = it.fields, pick = it.action === "pickup";
   $("pos").textContent = `${pos + 1} / ${list.length}`;
-  $("kind").innerHTML = `<span class="tag ${it.kind === "green" ? "g" : "p"}">${it.kind === "green" ? "緑" : "紫"}</span>`
+  $("kind").innerHTML = `<span class="kindTag ${it.kind === "green" ? "g" : "p"}">${it.kind === "green" ? "緑" : "紫"}</span>`
     + (it.excluded ? ' <span class="tag n">除外</span>' : "");
   $("title").textContent = pick ? `引取日を入力（${it.sheet} ${it.row}行）` : "新規行を追加";
   const img = await folder.read("images/" + it.file);
